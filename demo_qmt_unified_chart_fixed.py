@@ -6,10 +6,14 @@ from Plot.PlotMeta import CChanPlotMeta
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import numpy as np
+import warnings
 
 # 设置中文字体支持
 plt.rcParams['font.sans-serif'] = ['SimHei', 'Arial Unicode MS', 'DejaVu Sans']
 plt.rcParams['axes.unicode_minus'] = False
+
+# 过滤matplotlib的布局警告
+warnings.filterwarnings('ignore', category=UserWarning, module='matplotlib')
 
 def create_unified_multi_timeframe_chart():
     """
@@ -169,11 +173,12 @@ def create_unified_multi_timeframe_chart():
             ax.set_ylim(y_min - y_margin, y_max + y_margin)
             
             # 绘制缠论元素（包括买卖点箭头）
-            draw_chan_elements(meta, ax, plot_config, x_limits)
+            final_y_min, final_y_max = draw_chan_elements(meta, ax, plot_config, x_limits, y_min, y_max)
             
-            # 重新调整Y轴范围以确保所有元素都可见
-            ax.relim()
-            ax.autoscale_view()
+            # 根据买卖点位置最终调整Y轴范围
+            if final_y_min != y_min or final_y_max != y_max:
+                final_margin = (final_y_max - final_y_min) * 0.05
+                ax.set_ylim(final_y_min - final_margin, final_y_max + final_margin)
             
             # 设置子图标题和样式
             ax.set_title(f'{name}', fontsize=12, fontweight='bold', pad=10)
@@ -212,7 +217,7 @@ def create_unified_multi_timeframe_chart():
     
     return fig
 
-def draw_chan_elements(meta, ax, plot_config, x_limits):
+def draw_chan_elements(meta, ax, plot_config, x_limits, y_min, y_max):
     """
     绘制缠论分析元素
     """
@@ -238,9 +243,12 @@ def draw_chan_elements(meta, ax, plot_config, x_limits):
     if plot_config.get("plot_zs", False):
         draw_zs_boxes(meta, ax, x_begin)
     
-    # 绘制买卖点
+    # 绘制买卖点（可能会更新Y轴范围）
     if plot_config.get("plot_bsp", False):
-        draw_buy_sell_points(meta, ax, x_begin)
+        final_y_min, final_y_max = draw_buy_sell_points_with_range(meta, ax, x_begin, y_min, y_max)
+        return final_y_min, final_y_max
+    
+    return y_min, y_max
 
 def draw_klines(meta, ax, x_begin):
     """绘制K线"""
@@ -333,11 +341,12 @@ def draw_zs_boxes(meta, ax, x_begin):
     except Exception as e:
         print(f"绘制中枢时出错: {e}")
 
-def draw_buy_sell_points(meta, ax, x_begin):
-    """绘制买卖点 - 模仿图1的箭头和标签效果"""
+def draw_buy_sell_points_with_range(meta, ax, x_begin, y_min, y_max):
+    """绘制买卖点 - 模仿图1的箭头和标签效果，返回更新后的Y轴范围"""
     try:
-        # 获取Y轴范围用于计算箭头长度
-        y_range = ax.get_ylim()[1] - ax.get_ylim()[0]
+        # 使用传入的Y轴范围计算箭头长度
+        y_range = y_max - y_min
+        final_y_min, final_y_max = y_min, y_max
         
         # 绘制普通买卖点
         if hasattr(meta, 'bs_point_lst') and meta.bs_point_lst:
@@ -381,6 +390,12 @@ def draw_buy_sell_points(meta, ax, x_begin):
                 ax.arrow(bsp.x, text_y, 0, (arrow_len - arrow_head) * arrow_dir,
                         head_width=arrow_w, head_length=arrow_head,
                         color=color, alpha=0.8, linewidth=1.5, zorder=10)
+                
+                # 更新Y轴范围
+                if text_y < final_y_min:
+                    final_y_min = text_y - arrow_len * 0.1
+                if text_y > final_y_max:
+                    final_y_max = text_y + arrow_len * 0.1
         
         # 绘制段买卖点
         if hasattr(meta, 'seg_bsp_lst') and meta.seg_bsp_lst:
@@ -423,9 +438,18 @@ def draw_buy_sell_points(meta, ax, x_begin):
                 ax.arrow(seg_bsp.x, text_y, 0, (arrow_len - arrow_head) * arrow_dir,
                         head_width=arrow_w_seg, head_length=arrow_head,
                         color=color, alpha=0.9, linewidth=2, zorder=11)
-                        
+                
+                # 更新Y轴范围
+                if text_y < final_y_min:
+                    final_y_min = text_y - arrow_len * 0.1
+                if text_y > final_y_max:
+                    final_y_max = text_y + arrow_len * 0.1
+        
+        return final_y_min, final_y_max
+        
     except Exception as e:
         print(f"绘制买卖点时出错: {e}")
+        return y_min, y_max
 
 if __name__ == "__main__":
     print("=== 创建统一多时间框架缠论分析图表（含买卖点标识）===")
