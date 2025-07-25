@@ -13,6 +13,10 @@ from typing import List, Dict, Any
 import warnings
 
 # 导入缠论分析相关模块
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from Chan import CChan
 from ChanConfig import CChanConfig
 from Common.CEnum import AUTYPE, KL_TYPE

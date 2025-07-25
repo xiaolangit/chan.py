@@ -6,6 +6,9 @@
 
 import sys
 import traceback
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from stock_signals_api import StockSignalExtractor
 
 def test_signal_extraction():
