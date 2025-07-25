@@ -14,8 +14,9 @@
 
 ### 2. 演示程序
 - **`demo_qmt.py`** - 原始单时间框架演示（图1效果）
+- **`demo_qmt_unified_chart.py`** - 统一多时间框架演示（图2效果，4个时间框架在一张图上，推荐）
+- **`demo_qmt_advanced_multi.py`** - 高级多时间框架演示（生成独立图表文件）
 - **`demo_qmt_multi_timeframe.py`** - 基础多时间框架演示
-- **`demo_qmt_advanced_multi.py`** - 高级多时间框架演示（推荐）
 
 ### 3. 运行和文档
 - **`run_multi_timeframe.py`** - 自动化运行和测试脚本
@@ -32,7 +33,15 @@ python demo_qmt.py
 - 完整的K线、笔、段、中枢、买卖点标识
 - 与您原有的实现保持一致
 
-### ✅ 图2效果（多时间框架）
+### ✅ 图2效果（多时间框架在一张图上）
+```bash
+python demo_qmt_unified_chart.py
+```
+
+生成的图表文件：
+1. **`unified_multi_timeframe_159647_SZ.png`** - 4个时间框架在一张图上的统一显示（2x2布局）
+
+### ✅ 独立多时间框架图表
 ```bash
 python demo_qmt_advanced_multi.py
 ```
@@ -43,7 +52,6 @@ python demo_qmt_advanced_multi.py
 3. **`chart_15min.png`** - 15分钟级别缠论分析  
 4. **`chart_1day.png`** - 日线级别缠论分析
 5. **`summary_analysis.png`** - 四个时间框架汇总对比
-6. **`unified_multi_timeframe.png`** - 统一多时间框架图表（实验性）
 
 ## 技术特点
 
@@ -77,6 +85,10 @@ pip install pandas matplotlib numpy requests
 python run_multi_timeframe.py
 
 # 3. 或直接运行演示
+# 统一多时间框架图表（4个时间框架在一张图上）
+python demo_qmt_unified_chart.py
+
+# 或独立多时间框架图表
 python demo_qmt_advanced_multi.py
 ```
 

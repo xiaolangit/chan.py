@@ -84,32 +84,41 @@ def run_multi_timeframe_demo():
     print("\n=== 运行多时间框架演示 ===")
     
     try:
-        # 尝试运行高级版本
-        print("运行高级多时间框架演示...")
-        import demo_qmt_advanced_multi
+        # 尝试运行统一图表版本（4个时间框架在一张图上）
+        print("运行统一多时间框架演示（4个时间框架在一张图上）...")
+        import demo_qmt_unified_chart
         return True
         
     except Exception as e:
-        print(f"✗ 高级版本运行失败: {e}")
+        print(f"✗ 统一图表版本运行失败: {e}")
         
         try:
-            # 尝试运行基础版本
-            print("运行基础多时间框架演示...")
-            import demo_qmt_multi_timeframe
+            # 尝试运行高级版本
+            print("运行高级多时间框架演示（独立图表）...")
+            import demo_qmt_advanced_multi
             return True
             
         except Exception as e:
-            print(f"✗ 基础版本运行失败: {e}")
+            print(f"✗ 高级版本运行失败: {e}")
             
             try:
-                # 尝试运行单时间框架
-                print("运行单时间框架演示...")
-                import demo_qmt
+                # 尝试运行基础版本
+                print("运行基础多时间框架演示...")
+                import demo_qmt_multi_timeframe
                 return True
                 
             except Exception as e:
-                print(f"✗ 单时间框架运行失败: {e}")
-                return False
+                print(f"✗ 基础版本运行失败: {e}")
+                
+                try:
+                    # 尝试运行单时间框架
+                    print("运行单时间框架演示...")
+                    import demo_qmt
+                    return True
+                    
+                except Exception as e:
+                    print(f"✗ 单时间框架运行失败: {e}")
+                    return False
 
 def main():
     """主函数"""
@@ -132,6 +141,7 @@ def main():
         print("\n生成的文件:")
         
         possible_files = [
+            "unified_multi_timeframe_159647_SZ.png",
             "chart_1min.png",
             "chart_5min.png", 
             "chart_15min.png",
@@ -149,9 +159,10 @@ def main():
         print("\n✗ 演示运行失败")
         
     print("\n使用说明:")
-    print("1. 单时间框架: python demo_qmt.py")
-    print("2. 多时间框架: python demo_qmt_advanced_multi.py")
-    print("3. 查看文档: cat README_MultiTimeframe.md")
+    print("1. 统一多时间框架（4个时间框架在一张图上）: python demo_qmt_unified_chart.py")
+    print("2. 独立多时间框架图表: python demo_qmt_advanced_multi.py")
+    print("3. 单时间框架: python demo_qmt.py")
+    print("4. 查看文档: cat README_MultiTimeframe.md")
 
 if __name__ == "__main__":
     main()
