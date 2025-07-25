@@ -142,6 +142,7 @@ def main():
         
         possible_files = [
             "complete_multi_timeframe_159647_SZ.png",
+            "unified_multi_timeframe_with_bsp_159647_SZ.png",
             "unified_multi_timeframe_159647_SZ.png",
             "chart_1min.png",
             "chart_5min.png", 

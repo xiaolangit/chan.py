@@ -71,7 +71,7 @@ def create_unified_multi_timeframe_chart():
                           left=0.05, right=0.95, top=0.93, bottom=0.07)
     
     # 设置主标题
-    fig.suptitle(f'{code} Multi-Timeframe Chan Analysis\n1min | 5min | 15min | 1day', 
+    fig.suptitle(f'{code} Multi-Timeframe Chan Analysis with Buy/Sell Points\n1min | 5min | 15min | 1day', 
                 fontsize=18, fontweight='bold', y=0.96)
     
     # 收集所有缠论分析数据
@@ -153,7 +153,7 @@ def create_unified_multi_timeframe_chart():
             ax.set_xticklabels([meta.datetick[i] for i in tick_positions if i < len(meta.datetick)], 
                               rotation=45, fontsize=8)
             
-            # 计算Y轴范围
+            # 计算初始Y轴范围
             y_min = float("inf")
             y_max = float("-inf")
             for klc_meta in meta.klc_list:
@@ -164,12 +164,16 @@ def create_unified_multi_timeframe_chart():
                 if klc_meta.low < y_min:
                     y_min = klc_meta.low
             
-            # 添加一些边距
-            y_margin = (y_max - y_min) * 0.05
+            # 先设置一个临时的Y轴范围，用于买卖点箭头计算
+            y_margin = (y_max - y_min) * 0.15  # 增加边距以容纳买卖点箭头
             ax.set_ylim(y_min - y_margin, y_max + y_margin)
             
-            # 绘制缠论元素
+            # 绘制缠论元素（包括买卖点箭头）
             draw_chan_elements(meta, ax, plot_config, x_limits)
+            
+            # 重新调整Y轴范围以确保所有元素都可见
+            ax.relim()
+            ax.autoscale_view()
             
             # 设置子图标题和样式
             ax.set_title(f'{name}', fontsize=12, fontweight='bold', pad=10)
@@ -199,9 +203,9 @@ def create_unified_multi_timeframe_chart():
     plt.tight_layout(rect=[0, 0.03, 1, 0.93])
     
     # 保存图表
-    filename = f'./unified_multi_timeframe_{code.replace(".", "_")}.png'
+    filename = f'./unified_multi_timeframe_with_bsp_{code.replace(".", "_")}.png'
     plt.savefig(filename, dpi=300, bbox_inches='tight', facecolor='white')
-    print(f"\n✓ Unified multi-timeframe chart saved as: {filename}")
+    print(f"\n✓ Unified multi-timeframe chart with buy/sell points saved as: {filename}")
     
     # 显示图表
     plt.show()
@@ -330,46 +334,105 @@ def draw_zs_boxes(meta, ax, x_begin):
         print(f"绘制中枢时出错: {e}")
 
 def draw_buy_sell_points(meta, ax, x_begin):
-    """绘制买卖点"""
+    """绘制买卖点 - 模仿图1的箭头和标签效果"""
     try:
+        # 获取Y轴范围用于计算箭头长度
+        y_range = ax.get_ylim()[1] - ax.get_ylim()[0]
+        
+        # 绘制普通买卖点
         if hasattr(meta, 'bs_point_lst') and meta.bs_point_lst:
+            arrow_l = 0.12  # 箭头长度比例
+            arrow_h = 0.2   # 箭头头部长度比例
+            arrow_w = 1.0   # 箭头宽度
+            fontsize = 10   # 字体大小
+            
             for bsp in meta.bs_point_lst:
                 if bsp.x < x_begin:
                     continue
                 
-                # 根据买卖点类型设置颜色和符号
+                # 根据买卖点类型设置颜色和方向
                 if bsp.is_buy:
                     color = 'red'
-                    marker = '^'  # 向上三角形
-                    y_offset = -0.01
+                    arrow_dir = 1  # 向上
+                    verticalalignment = 'top'
                 else:
-                    color = 'green' 
-                    marker = 'v'  # 向下三角形
-                    y_offset = 0.01
+                    color = 'green'
+                    arrow_dir = -1  # 向下
+                    verticalalignment = 'bottom'
                 
-                # 计算Y坐标位置
-                y_pos = bsp.y
-                y_pos += y_offset * (ax.get_ylim()[1] - ax.get_ylim()[0])
+                # 计算箭头参数
+                arrow_len = arrow_l * y_range
+                arrow_head = arrow_len * arrow_h
                 
-                # 绘制买卖点标记
-                ax.scatter(bsp.x, y_pos, color=color, marker=marker, 
-                          s=100, zorder=10, edgecolors='black', linewidth=1)
+                # 计算文本和箭头位置
+                text_y = bsp.y - arrow_len * arrow_dir
                 
-                # 添加买卖点标签
-                label = f'{bsp.type}'
-                ax.annotate(label, (bsp.x, y_pos), 
-                           xytext=(0, 15 if bsp.is_buy else -15), 
-                           textcoords='offset points',
-                           ha='center', va='bottom' if bsp.is_buy else 'top',
-                           fontsize=8, color=color, fontweight='bold')
+                # 绘制买卖点标签文本
+                ax.text(bsp.x, text_y, f'{bsp.desc()}',
+                       fontsize=fontsize,
+                       color=color,
+                       verticalalignment=verticalalignment,
+                       horizontalalignment='center',
+                       fontweight='bold',
+                       bbox=dict(boxstyle='round,pad=0.2', facecolor='white', 
+                                edgecolor=color, alpha=0.8))
+                
+                # 绘制指向买卖点的箭头
+                ax.arrow(bsp.x, text_y, 0, (arrow_len - arrow_head) * arrow_dir,
+                        head_width=arrow_w, head_length=arrow_head,
+                        color=color, alpha=0.8, linewidth=1.5, zorder=10)
+        
+        # 绘制段买卖点
+        if hasattr(meta, 'seg_bsp_lst') and meta.seg_bsp_lst:
+            arrow_l_seg = 0.15  # 段买卖点箭头稍长一些
+            fontsize_seg = 12   # 段买卖点字体稍大一些
+            arrow_w_seg = 1.3   # 段买卖点箭头稍粗一些
+            
+            for seg_bsp in meta.seg_bsp_lst:
+                if seg_bsp.x < x_begin:
+                    continue
+                
+                # 根据买卖点类型设置颜色和方向
+                if seg_bsp.is_buy:
+                    color = 'darkred'
+                    arrow_dir = 1
+                    verticalalignment = 'top'
+                else:
+                    color = 'darkgreen'
+                    arrow_dir = -1
+                    verticalalignment = 'bottom'
+                
+                # 计算箭头参数
+                arrow_len = arrow_l_seg * y_range
+                arrow_head = arrow_len * arrow_h
+                
+                # 计算文本和箭头位置
+                text_y = seg_bsp.y - arrow_len * arrow_dir
+                
+                # 绘制段买卖点标签文本
+                ax.text(seg_bsp.x, text_y, f'{seg_bsp.desc()}',
+                       fontsize=fontsize_seg,
+                       color=color,
+                       verticalalignment=verticalalignment,
+                       horizontalalignment='center',
+                       fontweight='bold',
+                       bbox=dict(boxstyle='round,pad=0.3', facecolor='yellow', 
+                                edgecolor=color, alpha=0.9))
+                
+                # 绘制指向段买卖点的箭头
+                ax.arrow(seg_bsp.x, text_y, 0, (arrow_len - arrow_head) * arrow_dir,
+                        head_width=arrow_w_seg, head_length=arrow_head,
+                        color=color, alpha=0.9, linewidth=2, zorder=11)
+                        
     except Exception as e:
         print(f"绘制买卖点时出错: {e}")
 
 if __name__ == "__main__":
-    print("=== 创建统一多时间框架缠论分析图表 ===")
+    print("=== 创建统一多时间框架缠论分析图表（含买卖点标识）===")
     print("正在生成4个时间框架在一张图上的效果...")
     print("时间框架: 1分钟、5分钟、15分钟、1天")
     print("布局: 2x2 子图布局")
+    print("特性: 包含完整的买卖点箭头和标签（b1, s2s等）")
     print()
     
     try:
