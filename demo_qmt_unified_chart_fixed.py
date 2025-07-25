@@ -7,6 +7,10 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import numpy as np
 
+# 设置中文字体支持
+plt.rcParams['font.sans-serif'] = ['SimHei', 'Arial Unicode MS', 'DejaVu Sans']
+plt.rcParams['axes.unicode_minus'] = False
+
 def create_unified_multi_timeframe_chart():
     """
     创建真正的4个时间框架在一张图上的缠论分析
@@ -20,10 +24,10 @@ def create_unified_multi_timeframe_chart():
     
     # 定义四个时间框架
     timeframes = [
-        ("1分钟", KL_TYPE.K_1M),
-        ("5分钟", KL_TYPE.K_5M),
-        ("15分钟", KL_TYPE.K_15M),
-        ("1天", KL_TYPE.K_DAY)
+        ("1min", KL_TYPE.K_1M),
+        ("5min", KL_TYPE.K_5M),
+        ("15min", KL_TYPE.K_15M),
+        ("1day", KL_TYPE.K_DAY)
     ]
     
     # 缠论配置
@@ -67,7 +71,7 @@ def create_unified_multi_timeframe_chart():
                           left=0.05, right=0.95, top=0.93, bottom=0.07)
     
     # 设置主标题
-    fig.suptitle(f'{code} 多时间框架缠论分析\n1分钟 | 5分钟 | 15分钟 | 日线', 
+    fig.suptitle(f'{code} Multi-Timeframe Chan Analysis\n1min | 5min | 15min | 1day', 
                 fontsize=18, fontweight='bold', y=0.96)
     
     # 收集所有缠论分析数据
@@ -113,10 +117,10 @@ def create_unified_multi_timeframe_chart():
         
         if chan_data[name] is None or plot_metas[name] is None:
             # 如果数据获取失败，显示错误信息
-            ax.text(0.5, 0.5, f'{name}\n数据获取失败', 
+            ax.text(0.5, 0.5, f'{name}\nData Failed', 
                    ha='center', va='center', transform=ax.transAxes,
                    fontsize=14, color='red')
-            ax.set_title(f'{name} - 错误', fontsize=14, color='red')
+            ax.set_title(f'{name} - Error', fontsize=14, color='red')
             continue
         
         # 获取缠论分析数据
@@ -173,10 +177,11 @@ def create_unified_multi_timeframe_chart():
             ax.tick_params(labelsize=8)
             
             # 添加最新价格信息
-            if meta.klu_list:
-                latest_klu = meta.klu_list[-1]
+            klu_list = list(meta.klu_iter())
+            if klu_list:
+                latest_klu = klu_list[-1]
                 latest_price = latest_klu.close
-                ax.text(0.02, 0.98, f'最新: {latest_price:.2f}', 
+                ax.text(0.02, 0.98, f'Latest: {latest_price:.2f}', 
                        transform=ax.transAxes, fontsize=10,
                        verticalalignment='top',
                        bbox=dict(boxstyle='round,pad=0.3', facecolor='lightblue', alpha=0.8))
@@ -185,10 +190,10 @@ def create_unified_multi_timeframe_chart():
             
         except Exception as e:
             print(f"✗ {name} 图表绘制失败: {str(e)}")
-            ax.text(0.5, 0.5, f'{name}\n绘制失败:\n{str(e)}', 
+            ax.text(0.5, 0.5, f'{name}\nDraw Failed:\n{str(e)}', 
                    ha='center', va='center', transform=ax.transAxes,
                    fontsize=10, color='red')
-            ax.set_title(f'{name} - 绘制错误', fontsize=12, color='red')
+            ax.set_title(f'{name} - Draw Error', fontsize=12, color='red')
     
     # 调整布局
     plt.tight_layout(rect=[0, 0.03, 1, 0.93])
@@ -196,7 +201,7 @@ def create_unified_multi_timeframe_chart():
     # 保存图表
     filename = f'./unified_multi_timeframe_{code.replace(".", "_")}.png'
     plt.savefig(filename, dpi=300, bbox_inches='tight', facecolor='white')
-    print(f"\n✓ 统一多时间框架图表已保存为: {filename}")
+    print(f"\n✓ Unified multi-timeframe chart saved as: {filename}")
     
     # 显示图表
     plt.show()
@@ -307,17 +312,17 @@ def draw_seg_lines(meta, ax, x_begin):
 def draw_zs_boxes(meta, ax, x_begin):
     """绘制中枢"""
     try:
-        if hasattr(meta, 'zs_list') and meta.zs_list:
+        if hasattr(meta, 'zs_lst') and meta.zs_lst:
             from matplotlib.patches import Rectangle
             
-            for zs in meta.zs_list:
-                if zs.end_x < x_begin:
+            for zs in meta.zs_lst:
+                if zs.end < x_begin:
                     continue
                 
                 # 绘制中枢矩形
-                width = zs.end_x - zs.begin_x
+                width = zs.end - zs.begin
                 height = zs.high - zs.low
-                rect = Rectangle((zs.begin_x, zs.low), width, height, 
+                rect = Rectangle((zs.begin, zs.low), width, height, 
                                linewidth=1, edgecolor='orange', 
                                facecolor='yellow', alpha=0.3)
                 ax.add_patch(rect)
@@ -329,7 +334,7 @@ def draw_buy_sell_points(meta, ax, x_begin):
     try:
         if hasattr(meta, 'bs_point_lst') and meta.bs_point_lst:
             for bsp in meta.bs_point_lst:
-                if bsp.klu.idx < x_begin:
+                if bsp.x < x_begin:
                     continue
                 
                 # 根据买卖点类型设置颜色和符号
@@ -343,16 +348,16 @@ def draw_buy_sell_points(meta, ax, x_begin):
                     y_offset = 0.01
                 
                 # 计算Y坐标位置
-                y_pos = bsp.klu.low if bsp.is_buy else bsp.klu.high
+                y_pos = bsp.y
                 y_pos += y_offset * (ax.get_ylim()[1] - ax.get_ylim()[0])
                 
                 # 绘制买卖点标记
-                ax.scatter(bsp.klu.idx, y_pos, color=color, marker=marker, 
+                ax.scatter(bsp.x, y_pos, color=color, marker=marker, 
                           s=100, zorder=10, edgecolors='black', linewidth=1)
                 
                 # 添加买卖点标签
-                label = f'{bsp.type2str()}'
-                ax.annotate(label, (bsp.klu.idx, y_pos), 
+                label = f'{bsp.type}'
+                ax.annotate(label, (bsp.x, y_pos), 
                            xytext=(0, 15 if bsp.is_buy else -15), 
                            textcoords='offset points',
                            ha='center', va='bottom' if bsp.is_buy else 'top',

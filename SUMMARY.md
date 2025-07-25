@@ -14,7 +14,7 @@
 
 ### 2. 演示程序
 - **`demo_qmt.py`** - 原始单时间框架演示（图1效果）
-- **`demo_qmt_unified_chart.py`** - 统一多时间框架演示（图2效果，4个时间框架在一张图上，推荐）
+- **`demo_qmt_unified_chart_fixed.py`** - 统一多时间框架演示（图2效果，4个时间框架在一张图上，推荐）
 - **`demo_qmt_advanced_multi.py`** - 高级多时间框架演示（生成独立图表文件）
 - **`demo_qmt_multi_timeframe.py`** - 基础多时间框架演示
 
@@ -35,7 +35,7 @@ python demo_qmt.py
 
 ### ✅ 图2效果（多时间框架在一张图上）
 ```bash
-python demo_qmt_unified_chart.py
+python demo_qmt_unified_chart_fixed.py
 ```
 
 生成的图表文件：
@@ -86,7 +86,7 @@ python run_multi_timeframe.py
 
 # 3. 或直接运行演示
 # 统一多时间框架图表（4个时间框架在一张图上）
-python demo_qmt_unified_chart.py
+python demo_qmt_unified_chart_fixed.py
 
 # 或独立多时间框架图表
 python demo_qmt_advanced_multi.py
