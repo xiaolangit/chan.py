@@ -76,14 +76,14 @@ def test_single_timeframe():
         return False
 
 def run_unified_chart():
-    """运行统一图表"""
+    """运行完整统一图表"""
     try:
-        print("正在运行统一多时间框架图表...")
-        import demo_qmt_unified_chart_fixed
-        print("✓ 统一图表运行成功")
+        print("正在运行完整多时间框架图表（模仿图1效果）...")
+        import demo_qmt_unified_chart_complete
+        print("✓ 完整统一图表运行成功")
         return True
     except Exception as e:
-        print(f"✗ 统一图表运行失败: {e}")
+        print(f"✗ 完整统一图表运行失败: {e}")
         print(f"错误详情: {str(e)}")
         return False
 
@@ -109,8 +109,9 @@ def main():
         
     print("\n" + "=" * 40)
     print("✓ 所有测试通过！")
-    print("统一多时间框架图表应该已经生成")
-    print("请查看当前目录下的 unified_multi_timeframe_159647_SZ.png 文件")
+    print("完整多时间框架图表应该已经生成")
+    print("请查看当前目录下的 complete_multi_timeframe_159647_SZ.png 文件")
+    print("该图表包含完整的买卖点箭头和标签，模仿图1的效果")
 
 if __name__ == "__main__":
     main()

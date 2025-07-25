@@ -84,9 +84,9 @@ def run_multi_timeframe_demo():
     print("\n=== 运行多时间框架演示 ===")
     
     try:
-        # 尝试运行统一图表版本（4个时间框架在一张图上）
-        print("运行统一多时间框架演示（4个时间框架在一张图上）...")
-        import demo_qmt_unified_chart_fixed
+        # 尝试运行完整统一图表版本（4个时间框架在一张图上，完整买卖点）
+        print("运行完整多时间框架演示（4个时间框架在一张图上，模仿图1效果）...")
+        import demo_qmt_unified_chart_complete
         return True
         
     except Exception as e:
@@ -141,6 +141,7 @@ def main():
         print("\n生成的文件:")
         
         possible_files = [
+            "complete_multi_timeframe_159647_SZ.png",
             "unified_multi_timeframe_159647_SZ.png",
             "chart_1min.png",
             "chart_5min.png", 
@@ -159,7 +160,7 @@ def main():
         print("\n✗ 演示运行失败")
         
     print("\n使用说明:")
-    print("1. 统一多时间框架（4个时间框架在一张图上）: python demo_qmt_unified_chart_fixed.py")
+    print("1. 完整多时间框架（4个时间框架在一张图上，模仿图1效果）: python demo_qmt_unified_chart_complete.py")
     print("2. 独立多时间框架图表: python demo_qmt_advanced_multi.py")
     print("3. 单时间框架: python demo_qmt.py")
     print("4. 查看文档: cat README_MultiTimeframe.md")

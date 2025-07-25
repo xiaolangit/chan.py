@@ -14,7 +14,8 @@
 
 ### 2. 演示程序
 - **`demo_qmt.py`** - 原始单时间框架演示（图1效果）
-- **`demo_qmt_unified_chart_fixed.py`** - 统一多时间框架演示（图2效果，4个时间框架在一张图上，推荐）
+- **`demo_qmt_unified_chart_complete.py`** - 完整多时间框架演示（图2效果，4个时间框架在一张图上，完整买卖点标识，推荐）
+- **`demo_qmt_unified_chart_fixed.py`** - 基础多时间框架演示（4个时间框架在一张图上）
 - **`demo_qmt_advanced_multi.py`** - 高级多时间框架演示（生成独立图表文件）
 - **`demo_qmt_multi_timeframe.py`** - 基础多时间框架演示
 
@@ -33,13 +34,13 @@ python demo_qmt.py
 - 完整的K线、笔、段、中枢、买卖点标识
 - 与您原有的实现保持一致
 
-### ✅ 图2效果（多时间框架在一张图上）
+### ✅ 图2效果（多时间框架在一张图上，完整买卖点）
 ```bash
-python demo_qmt_unified_chart_fixed.py
+python demo_qmt_unified_chart_complete.py
 ```
 
 生成的图表文件：
-1. **`unified_multi_timeframe_159647_SZ.png`** - 4个时间框架在一张图上的统一显示（2x2布局）
+1. **`complete_multi_timeframe_159647_SZ.png`** - 4个时间框架在一张图上的完整显示（2x2布局，完整买卖点箭头和标签）
 
 ### ✅ 独立多时间框架图表
 ```bash
@@ -85,8 +86,8 @@ pip install pandas matplotlib numpy requests
 python run_multi_timeframe.py
 
 # 3. 或直接运行演示
-# 统一多时间框架图表（4个时间框架在一张图上）
-python demo_qmt_unified_chart_fixed.py
+# 完整多时间框架图表（4个时间框架在一张图上，模仿图1效果）
+python demo_qmt_unified_chart_complete.py
 
 # 或独立多时间框架图表
 python demo_qmt_advanced_multi.py
