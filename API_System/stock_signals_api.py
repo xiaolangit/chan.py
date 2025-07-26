@@ -88,21 +88,22 @@ class StockSignalExtractor:
             
             kl_type = self.timeframes[timeframe]
             
-            # 为了确保CChan能够找到相关类，我们需要将其添加到全局命名空间
-            globals()['CQMTData'] = CQMTData
-            globals()['MockStockData'] = MockStockData
-            
-            # 尝试使用真实数据源，失败时使用模拟数据源
-            data_src = "custom:QmtStockAPI.CQMTData"
+            # 使用动态导入的方式，避免修改原始Chan.py文件
             use_mock = False
             
+            # 将类添加到当前模块的全局命名空间
+            import DataAPI.QmtStockAPI
+            import DataAPI.MockStockAPI
+            globals()['CQMTData'] = DataAPI.QmtStockAPI.CQMTData
+            globals()['MockStockData'] = DataAPI.MockStockAPI.MockStockData
+            
             try:
-                # 创建缠论分析
+                # 创建缠论分析 - 使用真实数据源
                 chan = CChan(
                     code=code,
                     begin_time=begin_time,
                     end_time=end_time,
-                    data_src=data_src,
+                    data_src="custom:QmtStockAPI.CQMTData",
                     lv_list=[kl_type],
                     config=self.default_config,
                     autype=AUTYPE.QFQ,
@@ -111,13 +112,12 @@ class StockSignalExtractor:
                 # 如果网络连接失败，使用模拟数据源
                 if "Connection" in str(e) or "timeout" in str(e).lower():
                     print(f"⚠️  真实数据源连接失败，使用模拟数据: {e}")
-                    data_src = "custom:MockStockAPI.MockStockData"
                     use_mock = True
                     chan = CChan(
                         code=code,
                         begin_time=begin_time,
                         end_time=end_time,
-                        data_src=data_src,
+                        data_src="custom:MockStockAPI.MockStockData",
                         lv_list=[kl_type],
                         config=self.default_config,
                         autype=AUTYPE.QFQ,
