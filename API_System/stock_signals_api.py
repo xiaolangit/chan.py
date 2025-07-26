@@ -193,24 +193,20 @@ class StockSignalExtractor:
             }
     
     def _calculate_signal_strength(self, buy_signals: List[Dict], sell_signals: List[Dict]) -> str:
-        """检查是否有目标买卖点信号（b1, b2, s1, s2）"""
-        # 检查最新的买卖点是否是目标信号
-        target_buy_signals = ['b1', 'b2']
-        target_sell_signals = ['s1', 's2']
-        
+        """检查是否有买卖点信号"""
         # 获取最新的买卖信号
         latest_buy = buy_signals[-1] if buy_signals else None
         latest_sell = sell_signals[-1] if sell_signals else None
         
-        # 检查最新买入信号
-        if latest_buy and latest_buy.get('type') in target_buy_signals:
+        # 检查是否有最新买入信号
+        if latest_buy:
             return "target_buy"
         
-        # 检查最新卖出信号  
-        if latest_sell and latest_sell.get('type') in target_sell_signals:
+        # 检查是否有最新卖出信号  
+        if latest_sell:
             return "target_sell"
             
-        return "no_target_signal"
+        return "no_signal"
     
     def extract_multiple_signals(self, codes: List[str], timeframe: str = "1d", 
                                 begin_time: str = None, end_time: str = None) -> Dict[str, Any]:
@@ -231,9 +227,9 @@ class StockSignalExtractor:
             "total_stocks": len(codes),
             "successful": 0,
             "failed": 0,
-            "target_buy_stocks": [],  # 出现b1,b2买点的股票
-            "target_sell_stocks": [], # 出现s1,s2卖点的股票
-            "no_signal_stocks": []    # 没有目标信号的股票
+            "buy_signal_stocks": [],  # 出现买入信号的股票
+            "sell_signal_stocks": [], # 出现卖出信号的股票
+            "no_signal_stocks": []    # 没有任何信号的股票
         }
         
         for code in codes:
@@ -246,9 +242,9 @@ class StockSignalExtractor:
                 signal_strength = result["summary"]["signal_type"]
                 
                 if signal_strength == "target_buy":
-                    summary["target_buy_stocks"].append(code)
+                    summary["buy_signal_stocks"].append(code)
                 elif signal_strength == "target_sell":
-                    summary["target_sell_stocks"].append(code)
+                    summary["sell_signal_stocks"].append(code)
                 else:
                     summary["no_signal_stocks"].append(code)
             else:

@@ -10,8 +10,8 @@ import json
 import time
 
 def check_target_signals():
-    """检查目标买卖点信号"""
-    print("🎯 检查目标买卖点信号 (b1, b2, s1, s2)")
+    """检查买卖点信号"""
+    print("🎯 检查买卖点信号 (所有类型)")
     print("=" * 50)
     
     # 您的股票列表
@@ -27,34 +27,34 @@ def check_target_signals():
         if response.status_code == 200:
             data = response.json()
             
-            # 检查目标买入信号
-            target_buy_stocks = data["summary"]["target_buy_stocks"]
-            if target_buy_stocks:
-                print("🟢 目标买入信号 (b1, b2):")
-                for code in target_buy_stocks:
+            # 检查买入信号
+            buy_signal_stocks = data["summary"]["buy_signal_stocks"]
+            if buy_signal_stocks:
+                print("🟢 买入信号:")
+                for code in buy_signal_stocks:
                     stock_data = data["results"][code]
                     latest_buy = stock_data["latest_signals"]["latest_buy"]
                     if latest_buy:
                         print(f"  📈 {code}: {latest_buy['type']} @ {latest_buy['price']} ({latest_buy['time']})")
             else:
-                print("⚪ 无目标买入信号")
+                print("⚪ 无买入信号")
             
-            # 检查目标卖出信号
-            target_sell_stocks = data["summary"]["target_sell_stocks"]
-            if target_sell_stocks:
-                print("\n🔴 目标卖出信号 (s1, s2):")
-                for code in target_sell_stocks:
+            # 检查卖出信号
+            sell_signal_stocks = data["summary"]["sell_signal_stocks"]
+            if sell_signal_stocks:
+                print("\n🔴 卖出信号:")
+                for code in sell_signal_stocks:
                     stock_data = data["results"][code]
                     latest_sell = stock_data["latest_signals"]["latest_sell"]
                     if latest_sell:
                         print(f"  📉 {code}: {latest_sell['type']} @ {latest_sell['price']} ({latest_sell['time']})")
             else:
-                print("⚪ 无目标卖出信号")
+                print("⚪ 无卖出信号")
             
             # 显示无信号股票
             no_signal_stocks = data["summary"]["no_signal_stocks"]
             if no_signal_stocks:
-                print(f"\n⚫ 无目标信号股票: {no_signal_stocks}")
+                print(f"\n⚫ 无信号股票: {no_signal_stocks}")
                 
         else:
             print(f"❌ API调用失败: {response.status_code}")
@@ -93,16 +93,16 @@ def get_single_stock_target_signal(code):
                 
                 if signal_type == "target_buy":
                     latest_buy = data["latest_signals"]["latest_buy"]
-                    print(f"🟢 {code} 出现目标买入信号: {latest_buy['type']} @ {latest_buy['price']}")
+                    print(f"🟢 {code} 出现买入信号: {latest_buy['type']} @ {latest_buy['price']}")
                     return True
                     
                 elif signal_type == "target_sell":
                     latest_sell = data["latest_signals"]["latest_sell"]
-                    print(f"🔴 {code} 出现目标卖出信号: {latest_sell['type']} @ {latest_sell['price']}")
+                    print(f"🔴 {code} 出现卖出信号: {latest_sell['type']} @ {latest_sell['price']}")
                     return True
                     
                 else:
-                    print(f"⚪ {code} 无目标信号")
+                    print(f"⚪ {code} 无信号")
                     return False
             else:
                 print(f"❌ {code} 分析失败: {data['error']}")
@@ -113,8 +113,8 @@ def get_single_stock_target_signal(code):
         return False
 
 if __name__ == "__main__":
-    print("🎯 目标买卖点信号检查工具")
-    print("只在出现 b1, b2 (买入) 或 s1, s2 (卖出) 时通知")
+    print("🎯 买卖点信号检查工具")
+    print("检查所有缠论买卖点信号 (b1,b2,b3,s1,s2,s3等)")
     print("=" * 60)
     
     # 选择运行模式
