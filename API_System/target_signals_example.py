@@ -11,7 +11,7 @@ import time
 
 def check_target_signals():
     """检查买卖点信号"""
-    print("🎯 检查买卖点信号 (所有类型)")
+    print("🎯 检查确认的买卖点信号 (is_sure=True)")
     print("=" * 50)
     
     # 您的股票列表
@@ -114,7 +114,7 @@ def get_single_stock_target_signal(code):
 
 if __name__ == "__main__":
     print("🎯 买卖点信号检查工具")
-    print("检查所有缠论买卖点信号 (b1,b2,b3,s1,s2,s3等)")
+    print("检查所有确认的缠论买卖点信号 (只包含is_sure=True的信号)")
     print("=" * 60)
     
     # 选择运行模式

@@ -110,16 +110,30 @@ class StockSignalExtractor:
             buy_signals = []
             sell_signals = []
             
-            # 处理普通买卖点
+            # 处理普通买卖点（只包含is_sure=True的）
             if hasattr(meta, 'bs_point_lst') and meta.bs_point_lst:
                 for bsp in meta.bs_point_lst:
+                    # 检查关联的笔是否is_sure=True
+                    if hasattr(bsp, 'x') and bsp.x < len(meta.data.bi_list):
+                        # 通过x坐标找到对应的笔
+                        corresponding_bi = None
+                        for bi in meta.data.bi_list:
+                            if bi.get_end_klu().idx == bsp.x:
+                                corresponding_bi = bi
+                                break
+                        
+                        # 只有当对应的笔is_sure=True时才包含此买卖点
+                        if corresponding_bi is None or not corresponding_bi.is_sure:
+                            continue
+                    
                     signal_info = {
                         "type": bsp.desc(),
                         "time": meta.datetick[bsp.x] if bsp.x < len(meta.datetick) else "Unknown",
                         "price": float(bsp.y),
                         "x_index": int(bsp.x),
                         "signal_category": "normal",
-                        "is_buy": bool(bsp.is_buy)
+                        "is_buy": bool(bsp.is_buy),
+                        "is_sure": True  # 明确标记这是确认的信号
                     }
                     
                     if bsp.is_buy:
@@ -127,16 +141,30 @@ class StockSignalExtractor:
                     else:
                         sell_signals.append(signal_info)
             
-            # 处理段买卖点
+            # 处理段买卖点（只包含is_sure=True的）
             if hasattr(meta, 'seg_bsp_lst') and meta.seg_bsp_lst:
                 for seg_bsp in meta.seg_bsp_lst:
+                    # 检查关联的段是否is_sure=True
+                    if hasattr(seg_bsp, 'x') and seg_bsp.x < len(meta.data.seg_list):
+                        # 通过x坐标找到对应的段
+                        corresponding_seg = None
+                        for seg in meta.data.seg_list:
+                            if seg.get_end_klu().idx == seg_bsp.x:
+                                corresponding_seg = seg
+                                break
+                        
+                        # 只有当对应的段is_sure=True时才包含此买卖点
+                        if corresponding_seg is None or not corresponding_seg.is_sure:
+                            continue
+                    
                     signal_info = {
                         "type": seg_bsp.desc(),
                         "time": meta.datetick[seg_bsp.x] if seg_bsp.x < len(meta.datetick) else "Unknown",
                         "price": float(seg_bsp.y),
                         "x_index": int(seg_bsp.x),
                         "signal_category": "segment",
-                        "is_buy": bool(seg_bsp.is_buy)
+                        "is_buy": bool(seg_bsp.is_buy),
+                        "is_sure": True  # 明确标记这是确认的信号
                     }
                     
                     if seg_bsp.is_buy:
