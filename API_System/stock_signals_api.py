@@ -179,7 +179,7 @@ class StockSignalExtractor:
                 "summary": {
                     "has_recent_buy": latest_buy_signal is not None,
                     "has_recent_sell": latest_sell_signal is not None,
-                    "signal_strength": self._calculate_signal_strength(buy_signals, sell_signals)
+                    "signal_type": self._calculate_signal_strength(buy_signals, sell_signals)
                 }
             }
             
@@ -193,20 +193,24 @@ class StockSignalExtractor:
             }
     
     def _calculate_signal_strength(self, buy_signals: List[Dict], sell_signals: List[Dict]) -> str:
-        """计算信号强度"""
-        recent_buy_count = len([s for s in buy_signals[-5:] if s])
-        recent_sell_count = len([s for s in sell_signals[-5:] if s])
+        """检查是否有目标买卖点信号（b1, b2, s1, s2）"""
+        # 检查最新的买卖点是否是目标信号
+        target_buy_signals = ['b1', 'b2']
+        target_sell_signals = ['s1', 's2']
         
-        if recent_buy_count > recent_sell_count * 1.5:
-            return "strong_buy"
-        elif recent_sell_count > recent_buy_count * 1.5:
-            return "strong_sell"
-        elif recent_buy_count > recent_sell_count:
-            return "weak_buy"
-        elif recent_sell_count > recent_buy_count:
-            return "weak_sell"
-        else:
-            return "neutral"
+        # 获取最新的买卖信号
+        latest_buy = buy_signals[-1] if buy_signals else None
+        latest_sell = sell_signals[-1] if sell_signals else None
+        
+        # 检查最新买入信号
+        if latest_buy and latest_buy.get('type') in target_buy_signals:
+            return "target_buy"
+        
+        # 检查最新卖出信号  
+        if latest_sell and latest_sell.get('type') in target_sell_signals:
+            return "target_sell"
+            
+        return "no_target_signal"
     
     def extract_multiple_signals(self, codes: List[str], timeframe: str = "1d", 
                                 begin_time: str = None, end_time: str = None) -> Dict[str, Any]:
@@ -227,9 +231,9 @@ class StockSignalExtractor:
             "total_stocks": len(codes),
             "successful": 0,
             "failed": 0,
-            "strong_buy_stocks": [],
-            "strong_sell_stocks": [],
-            "neutral_stocks": []
+            "target_buy_stocks": [],  # 出现b1,b2买点的股票
+            "target_sell_stocks": [], # 出现s1,s2卖点的股票
+            "no_signal_stocks": []    # 没有目标信号的股票
         }
         
         for code in codes:
@@ -239,14 +243,14 @@ class StockSignalExtractor:
             
             if result["status"] == "success":
                 summary["successful"] += 1
-                signal_strength = result["summary"]["signal_strength"]
+                signal_strength = result["summary"]["signal_type"]
                 
-                if signal_strength in ["strong_buy", "weak_buy"]:
-                    summary["strong_buy_stocks"].append(code)
-                elif signal_strength in ["strong_sell", "weak_sell"]:
-                    summary["strong_sell_stocks"].append(code)
+                if signal_strength == "target_buy":
+                    summary["target_buy_stocks"].append(code)
+                elif signal_strength == "target_sell":
+                    summary["target_sell_stocks"].append(code)
                 else:
-                    summary["neutral_stocks"].append(code)
+                    summary["no_signal_stocks"].append(code)
             else:
                 summary["failed"] += 1
         
