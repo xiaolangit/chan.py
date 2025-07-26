@@ -22,7 +22,6 @@ from ChanConfig import CChanConfig
 from Common.CEnum import AUTYPE, KL_TYPE
 from Plot.PlotMeta import CChanPlotMeta
 from DataAPI.QmtStockAPI import CQMTData
-from DataAPI.MockStockAPI import MockStockData
 
 # 过滤警告
 warnings.filterwarnings('ignore', category=UserWarning, module='matplotlib')
@@ -89,41 +88,20 @@ class StockSignalExtractor:
             kl_type = self.timeframes[timeframe]
             
             # 使用动态导入的方式，避免修改原始Chan.py文件
-            use_mock = False
-            
             # 将类添加到当前模块的全局命名空间
             import DataAPI.QmtStockAPI
-            import DataAPI.MockStockAPI
             globals()['CQMTData'] = DataAPI.QmtStockAPI.CQMTData
-            globals()['MockStockData'] = DataAPI.MockStockAPI.MockStockData
             
-            try:
-                # 创建缠论分析 - 使用真实数据源
-                chan = CChan(
-                    code=code,
-                    begin_time=begin_time,
-                    end_time=end_time,
-                    data_src="custom:QmtStockAPI.CQMTData",
-                    lv_list=[kl_type],
-                    config=self.default_config,
-                    autype=AUTYPE.QFQ,
-                )
-            except Exception as e:
-                # 如果网络连接失败，使用模拟数据源
-                if "Connection" in str(e) or "timeout" in str(e).lower():
-                    print(f"⚠️  真实数据源连接失败，使用模拟数据: {e}")
-                    use_mock = True
-                    chan = CChan(
-                        code=code,
-                        begin_time=begin_time,
-                        end_time=end_time,
-                        data_src="custom:MockStockAPI.MockStockData",
-                        lv_list=[kl_type],
-                        config=self.default_config,
-                        autype=AUTYPE.QFQ,
-                    )
-                else:
-                    raise e
+            # 创建缠论分析 - 直接使用QMT数据源
+            chan = CChan(
+                code=code,
+                begin_time=begin_time,
+                end_time=end_time,
+                data_src="custom:QmtStockAPI.CQMTData",
+                lv_list=[kl_type],
+                config=self.default_config,
+                autype=AUTYPE.QFQ,
+            )
             
             # 获取绘图元数据
             meta = CChanPlotMeta(chan[kl_type])
@@ -179,7 +157,7 @@ class StockSignalExtractor:
                 "code": code,
                 "timeframe": timeframe,
                 "status": "success",
-                "data_source": "mock" if use_mock else "real",
+                "data_source": "real",
                 "data_range": {
                     "begin_time": begin_time,
                     "end_time": end_time
