@@ -401,12 +401,9 @@ class CPlotDriver:
         for seg_idx, seg_meta in enumerate(meta.seg_list):
             if seg_meta.end_x < x_begin:
                 continue
-            # is_sure=true时不画虚线，只有is_sure=false时才画虚线
+            # 只绘制确定的段，不确定的段不显示
             if seg_meta.is_sure:
                 ax.plot([seg_meta.begin_x, seg_meta.end_x], [seg_meta.begin_y, seg_meta.end_y], color=color, linewidth=width)
-            else:
-                # 只有不确定的段才画虚线
-                ax.plot([seg_meta.begin_x, seg_meta.end_x], [seg_meta.begin_y, seg_meta.end_y], color=color, linewidth=width, linestyle='dashed')
             if disp_end:
                 bi_text(seg_idx, ax, seg_meta, end_fontsize, end_color)
             if plot_trendline:
@@ -445,12 +442,9 @@ class CPlotDriver:
         for seg_idx, seg_meta in enumerate(meta.segseg_list):
             if seg_meta.end_x < x_begin:
                 continue
-            # is_sure=true时不画虚线，只有is_sure=false时才画虚线
+            # 只绘制确定的段，不确定的段不显示
             if seg_meta.is_sure:
                 ax.plot([seg_meta.begin_x, seg_meta.end_x], [seg_meta.begin_y, seg_meta.end_y], color=color, linewidth=width)
-            else:
-                # 只有不确定的段才画虚线
-                ax.plot([seg_meta.begin_x, seg_meta.end_x], [seg_meta.begin_y, seg_meta.end_y], color=color, linewidth=width, linestyle='dashed')
             if disp_end:
                 if seg_idx == 0:
                     ax.text(
@@ -518,15 +512,17 @@ class CPlotDriver:
                 continue
             if zs_meta.begin+zs_meta.w < x_begin:
                 continue
-            # is_sure=true时不画虚线，只有is_sure=false时才画虚线
-            line_style = '-' if zs_meta.is_sure else '--'
-            ax.add_patch(Rectangle((zs_meta.begin, zs_meta.low), zs_meta.w, zs_meta.h, fill=False, color=color, linewidth=linewidth, linestyle=line_style))
-            for sub_zs_meta in zs_meta.sub_zs_lst:
-                ax.add_patch(Rectangle((sub_zs_meta.begin, sub_zs_meta.low), sub_zs_meta.w, sub_zs_meta.h, fill=False, color=color, linewidth=sub_linewidth, linestyle=line_style))
-            if show_text:
+            # 只绘制确定的中枢，不确定的中枢不显示
+            if zs_meta.is_sure:
+                ax.add_patch(Rectangle((zs_meta.begin, zs_meta.low), zs_meta.w, zs_meta.h, fill=False, color=color, linewidth=linewidth))
+                for sub_zs_meta in zs_meta.sub_zs_lst:
+                    if sub_zs_meta.is_sure:
+                        ax.add_patch(Rectangle((sub_zs_meta.begin, sub_zs_meta.low), sub_zs_meta.w, sub_zs_meta.h, fill=False, color=color, linewidth=sub_linewidth))
+            if show_text and zs_meta.is_sure:
                 add_zs_text(ax, zs_meta, fontsize, text_color)
                 for sub_zs_meta in zs_meta.sub_zs_lst:
-                    add_zs_text(ax, sub_zs_meta, fontsize, text_color)
+                    if sub_zs_meta.is_sure:
+                        add_zs_text(ax, sub_zs_meta, fontsize, text_color)
 
     def draw_segzs(self, meta: CChanPlotMeta, ax: Axes, color='red', linewidth=10, sub_linewidth=4):
         linewidth = max(linewidth, 2)
@@ -534,11 +530,12 @@ class CPlotDriver:
         for zs_meta in meta.segzs_lst:
             if zs_meta.begin+zs_meta.w < x_begin:
                 continue
-            # is_sure=true时不画虚线，只有is_sure=false时才画虚线
-            line_style = '-' if zs_meta.is_sure else '--'
-            ax.add_patch(Rectangle((zs_meta.begin, zs_meta.low), zs_meta.w, zs_meta.h, fill=False, color=color, linewidth=linewidth, linestyle=line_style))
-            for sub_zs_meta in zs_meta.sub_zs_lst:
-                ax.add_patch(Rectangle((sub_zs_meta.begin, sub_zs_meta.low), sub_zs_meta.w, sub_zs_meta.h, fill=False, color=color, linewidth=sub_linewidth, linestyle=line_style))
+            # 只绘制确定的中枢，不确定的中枢不显示
+            if zs_meta.is_sure:
+                ax.add_patch(Rectangle((zs_meta.begin, zs_meta.low), zs_meta.w, zs_meta.h, fill=False, color=color, linewidth=linewidth))
+                for sub_zs_meta in zs_meta.sub_zs_lst:
+                    if sub_zs_meta.is_sure:
+                        ax.add_patch(Rectangle((sub_zs_meta.begin, sub_zs_meta.low), sub_zs_meta.w, sub_zs_meta.h, fill=False, color=color, linewidth=sub_linewidth))
 
     def draw_macd(self, meta: CChanPlotMeta, ax: Axes, x_limits, width=0.4):
         macd_lst = [klu.macd for klu in meta.klu_iter()]
