@@ -13,7 +13,7 @@ class CustomPlotDriver(CPlotDriver):
         meta,
         ax,
         lv,
-        width=8,  # 更粗的线宽
+        width=4,  # 适度增加线宽
         color="red",  # 默认红色
         sub_lv_cnt=None,
         facecolor='green',
@@ -65,7 +65,7 @@ class CustomPlotDriver(CPlotDriver):
         self,
         meta,
         ax,
-        width=10,  # 更粗的段段线宽
+        width=5,  # 适度增加段段线宽
         color="brown",
         disp_end=False,
         end_color='brown',
@@ -245,11 +245,11 @@ if __name__ == "__main__":
         },
         "seg": {
             # "plot_trendline": True,
-            "width": 8,  # 更粗的段线宽
+            "width": 4,  # 适度增加段线宽，比默认粗一些
             "color": "red",  # 段的颜色
         },
         "segseg": {
-            "width": 10,  # 更粗的段段线宽
+            "width": 5,  # 适度增加段段线宽
             "color": "brown",  # 段段的颜色
         },
         "bi": {
@@ -260,14 +260,15 @@ if __name__ == "__main__":
         "bsp": {
             "buy_color": "red",  # 买入点颜色
             "sell_color": "green",  # 卖出点颜色
-            "fontsize": 24,  # 更大的买卖点字体
-            "arrow_l": 0.4,  # 更大的箭头长度
-            "arrow_h": 0.5,  # 更大的箭头高度
-            "arrow_w": 2.5,  # 更大的箭头宽度
+            "fontsize": 16,  # 适度增大买卖点字体，不要过于夸张
+            "arrow_l": 0.2,  # 适度的箭头长度
+            "arrow_h": 0.25,  # 适度的箭头高度
+            "arrow_w": 1.5,  # 适度的箭头宽度
         },
         "zs": {
-            "linewidth": 2,  # 中枢边框宽度
+            "linewidth": 3,  # 适度增加中枢边框宽度
             "color": "yellow",  # 中枢颜色
+            "show_text": True,  # 显示中枢文本
         },
         "figure": {
             "x_range": 200,
