@@ -1,3 +1,20 @@
+"""
+统一多时间框架缠论分析图表（确认买卖点版本）
+
+特性：
+- 4个时间框架（1分钟、5分钟、15分钟、1天）在一张图上
+- 2x2子图布局，类似"图2"的效果
+- 只显示is_sure=True的确认买卖点
+- 普通买卖点：基于确认的笔(bi.is_sure=True)
+- 段买卖点：基于确认的段(seg.is_sure=True)
+- 确保信号的可靠性和稳定性
+
+更新内容：
+- 添加了is_sure=True的过滤条件
+- 只绘制经过确认的买卖点信号
+- 提高信号质量，减少噪音
+"""
+
 from Chan import CChan
 from ChanConfig import CChanConfig
 from Common.CEnum import AUTYPE, DATA_SRC, KL_TYPE
@@ -19,6 +36,12 @@ def create_unified_multi_timeframe_chart():
     """
     创建真正的4个时间框架在一张图上的缠论分析
     类似图2的效果：2x2布局，每个子图显示一个时间框架
+    
+    特性：
+    - 只显示is_sure=True的确认买卖点
+    - 普通买卖点基于确认的笔
+    - 段买卖点基于确认的段
+    - 确保信号的可靠性和稳定性
     """
     
     code = "159647.SZ"
@@ -348,7 +371,7 @@ def draw_buy_sell_points_with_range(meta, ax, x_begin, y_min, y_max):
         y_range = y_max - y_min
         final_y_min, final_y_max = y_min, y_max
         
-        # 绘制普通买卖点
+        # 绘制普通买卖点（只显示is_sure=True的买卖点）
         if hasattr(meta, 'bs_point_lst') and meta.bs_point_lst:
             arrow_l = 0.12  # 箭头长度比例
             arrow_h = 0.2   # 箭头头部长度比例
@@ -358,6 +381,18 @@ def draw_buy_sell_points_with_range(meta, ax, x_begin, y_min, y_max):
             for bsp in meta.bs_point_lst:
                 if bsp.x < x_begin:
                     continue
+                
+                # 检查对应的笔是否is_sure=True
+                if hasattr(bsp, 'x') and bsp.x < len(meta.data.bi_list):
+                    corresponding_bi = None
+                    for bi in meta.data.bi_list:
+                        if bi.get_end_klu().idx == bsp.x:
+                            corresponding_bi = bi
+                            break
+                    
+                    # 只有当对应的笔is_sure=True时才绘制此买卖点
+                    if corresponding_bi is None or not corresponding_bi.is_sure:
+                        continue
                 
                 # 根据买卖点类型设置颜色和方向
                 if bsp.is_buy:
@@ -397,7 +432,7 @@ def draw_buy_sell_points_with_range(meta, ax, x_begin, y_min, y_max):
                 if text_y > final_y_max:
                     final_y_max = text_y + arrow_len * 0.1
         
-        # 绘制段买卖点
+        # 绘制段买卖点（只显示is_sure=True的段买卖点）
         if hasattr(meta, 'seg_bsp_lst') and meta.seg_bsp_lst:
             arrow_l_seg = 0.15  # 段买卖点箭头稍长一些
             fontsize_seg = 12   # 段买卖点字体稍大一些
@@ -406,6 +441,18 @@ def draw_buy_sell_points_with_range(meta, ax, x_begin, y_min, y_max):
             for seg_bsp in meta.seg_bsp_lst:
                 if seg_bsp.x < x_begin:
                     continue
+                
+                # 检查对应的段是否is_sure=True
+                if hasattr(seg_bsp, 'x') and seg_bsp.x < len(meta.data.seg_list):
+                    corresponding_seg = None
+                    for seg in meta.data.seg_list:
+                        if seg.get_end_klu().idx == seg_bsp.x:
+                            corresponding_seg = seg
+                            break
+                    
+                    # 只有当对应的段is_sure=True时才绘制此买卖点
+                    if corresponding_seg is None or not corresponding_seg.is_sure:
+                        continue
                 
                 # 根据买卖点类型设置颜色和方向
                 if seg_bsp.is_buy:
@@ -452,11 +499,14 @@ def draw_buy_sell_points_with_range(meta, ax, x_begin, y_min, y_max):
         return y_min, y_max
 
 if __name__ == "__main__":
-    print("=== 创建统一多时间框架缠论分析图表（含买卖点标识）===")
+    print("=== 创建统一多时间框架缠论分析图表（确认买卖点版本）===")
     print("正在生成4个时间框架在一张图上的效果...")
     print("时间框架: 1分钟、5分钟、15分钟、1天")
     print("布局: 2x2 子图布局")
-    print("特性: 包含完整的买卖点箭头和标签（b1, s2s等）")
+    print("特性: 只显示is_sure=True的确认买卖点")
+    print("     - 普通买卖点: 基于确认的笔(bi.is_sure=True)")
+    print("     - 段买卖点: 基于确认的段(seg.is_sure=True)")
+    print("     - 确保信号可靠性和稳定性")
     print()
     
     try:
