@@ -5,9 +5,9 @@
 基于您现有的缠论分析系统，我已经为您创建了一个完整的**股票买卖信号提取API**。该API能够：
 
 - ✅ **批量处理您的股票列表** `["159647.SZ", "600585.SH"]`
-- ✅ **提取完整的缠论买卖信号**（包括普通买卖点和段买卖点）
+- ✅ **提取确认的缠论买卖信号**（只包含 `is_sure=True` 的买卖点）
 - ✅ **支持多时间框架分析**（1分钟到月线）
-- ✅ **自动容错处理**（真实数据源不可用时自动切换模拟数据）
+- ✅ **信号可靠性保证**（只通知已确认的买卖点）
 - ✅ **RESTful API接口**（支持JSON格式输入输出）
 
 ## 🚀 快速开始
@@ -117,9 +117,9 @@ for code, stock_data in result["results"].items():
     "total_stocks": 2,
     "successful": 2,
     "failed": 0,
-    "strong_buy_stocks": ["159647.SZ"],
-    "strong_sell_stocks": [],
-    "neutral_stocks": ["600585.SH"]
+    "buy_signal_stocks": ["159647.SZ"],
+    "sell_signal_stocks": [],
+    "no_signal_stocks": ["600585.SH"]
   },
   "results": {
     "159647.SZ": {
@@ -139,17 +139,19 @@ for code, stock_data in result["results"].items():
             "price": 2.15,
             "x_index": 240,
             "signal_category": "normal",
-            "is_buy": true
+            "is_buy": true,
+            "is_sure": true
           }
         ],
         "sell_signals": [
           {
-            "type": "s2s",
+            "type": "※s2",
             "time": "2025/01/18",
             "price": 2.35,
             "x_index": 238,
             "signal_category": "segment",
-            "is_buy": false
+            "is_buy": false,
+            "is_sure": true
           }
         ],
         "total_buy_count": 1,
@@ -164,7 +166,7 @@ for code, stock_data in result["results"].items():
         "latest_sell": null
       },
       "summary": {
-        "signal_strength": "weak_buy",
+        "signal_type": "target_buy",
         "has_recent_buy": true,
         "has_recent_sell": false
       }
@@ -186,23 +188,22 @@ for code, stock_data in result["results"].items():
 - `1M` - 月线
 
 ### 买卖点类型
-- **普通买卖点**: `b1`, `s1`, `b2`, `s2`, `b3a`, `s3b`, `1p`, `2s`
-- **段买卖点**: 带 `※` 标记，如 `※b1`, `※s2s`
+- **普通买卖点**: `b1`, `s1`, `b2`, `s2`, `b3a`, `s3b`, `1p`, `2s`（只包含对应笔 `is_sure=True` 的）
+- **段买卖点**: 带 `※` 标记，如 `※b1`, `※s2s`（只包含对应段 `is_sure=True` 的）
+- **确认机制**: 所有返回的买卖点都经过 `is_sure=True` 验证，确保信号可靠性
 
-### 信号强度评级
-- `strong_buy` - 强买入信号
-- `weak_buy` - 弱买入信号  
-- `neutral` - 中性
-- `weak_sell` - 弱卖出信号
-- `strong_sell` - 强卖出信号
+### 信号类型
+- `target_buy` - 检测到确认的买入信号
+- `target_sell` - 检测到确认的卖出信号
+- `no_signal` - 没有检测到任何信号
 
 ## 📡 数据源说明
 
-API支持自动容错：
+API直接使用真实数据源：
 
-1. **优先使用真实数据源**：QMT讯投接口 (`111.180.147.209`)
-2. **自动切换模拟数据**：当网络连接失败时，自动使用高质量模拟数据
-3. **数据源标识**：返回结果中的 `data_source` 字段显示 `"real"` 或 `"mock"`
+1. **QMT真实数据源**：直接连接QMT讯投接口 (`111.180.147.209`)
+2. **确认信号机制**：只返回 `is_sure=True` 的买卖点，确保信号可靠性
+3. **数据源标识**：返回结果中的 `data_source` 字段显示 `"real"`
 
 ## 🔍 实际使用场景
 

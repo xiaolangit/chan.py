@@ -11,12 +11,12 @@
 ### 🎯 核心功能
 
 ✅ **支持您的股票列表**：`["159647.SZ", "600585.SH"]` 
-✅ **提取缠论买卖信号**：包括所有类型的买卖点（b1, s1, b2, s2, b3a, s3b, 1p, 2s等）
+✅ **提取确认的缠论买卖信号**：只包含 `is_sure=True` 的买卖点，确保信号可靠性
 ✅ **RESTful API接口**：标准JSON格式输入输出
 ✅ **批量处理能力**：一次请求分析多个股票
 ✅ **多时间框架**：支持1分钟到月线的所有时间周期
-✅ **自动容错**：真实数据源不可用时自动切换模拟数据
-✅ **信号强度评级**：自动计算strong_buy/weak_buy/neutral/weak_sell/strong_sell
+✅ **直接数据源**：使用QMT真实数据源，无容错切换
+✅ **信号分类**：自动识别买入/卖出信号类型
 
 ## 🚀 立即可用的接口
 
@@ -40,8 +40,8 @@ response = requests.post("http://localhost:5000/api/signals/batch", json={
 })
 
 data = response.json()
-print(f"强买入股票: {data['summary']['strong_buy_stocks']}")
-print(f"强卖出股票: {data['summary']['strong_sell_stocks']}")
+print(f"买入信号股票: {data['summary']['buy_signal_stocks']}")
+print(f"卖出信号股票: {data['summary']['sell_signal_stocks']}")
 ```
 
 ## 📁 交付文件清单
