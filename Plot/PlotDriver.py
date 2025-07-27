@@ -401,9 +401,11 @@ class CPlotDriver:
         for seg_idx, seg_meta in enumerate(meta.seg_list):
             if seg_meta.end_x < x_begin:
                 continue
+            # is_sure=true时不画虚线，只有is_sure=false时才画虚线
             if seg_meta.is_sure:
                 ax.plot([seg_meta.begin_x, seg_meta.end_x], [seg_meta.begin_y, seg_meta.end_y], color=color, linewidth=width)
             else:
+                # 只有不确定的段才画虚线
                 ax.plot([seg_meta.begin_x, seg_meta.end_x], [seg_meta.begin_y, seg_meta.end_y], color=color, linewidth=width, linestyle='dashed')
             if disp_end:
                 bi_text(seg_idx, ax, seg_meta, end_fontsize, end_color)
@@ -443,9 +445,11 @@ class CPlotDriver:
         for seg_idx, seg_meta in enumerate(meta.segseg_list):
             if seg_meta.end_x < x_begin:
                 continue
+            # is_sure=true时不画虚线，只有is_sure=false时才画虚线
             if seg_meta.is_sure:
                 ax.plot([seg_meta.begin_x, seg_meta.end_x], [seg_meta.begin_y, seg_meta.end_y], color=color, linewidth=width)
             else:
+                # 只有不确定的段才画虚线
                 ax.plot([seg_meta.begin_x, seg_meta.end_x], [seg_meta.begin_y, seg_meta.end_y], color=color, linewidth=width, linestyle='dashed')
             if disp_end:
                 if seg_idx == 0:
@@ -514,6 +518,7 @@ class CPlotDriver:
                 continue
             if zs_meta.begin+zs_meta.w < x_begin:
                 continue
+            # is_sure=true时不画虚线，只有is_sure=false时才画虚线
             line_style = '-' if zs_meta.is_sure else '--'
             ax.add_patch(Rectangle((zs_meta.begin, zs_meta.low), zs_meta.w, zs_meta.h, fill=False, color=color, linewidth=linewidth, linestyle=line_style))
             for sub_zs_meta in zs_meta.sub_zs_lst:
@@ -529,6 +534,7 @@ class CPlotDriver:
         for zs_meta in meta.segzs_lst:
             if zs_meta.begin+zs_meta.w < x_begin:
                 continue
+            # is_sure=true时不画虚线，只有is_sure=false时才画虚线
             line_style = '-' if zs_meta.is_sure else '--'
             ax.add_patch(Rectangle((zs_meta.begin, zs_meta.low), zs_meta.w, zs_meta.h, fill=False, color=color, linewidth=linewidth, linestyle=line_style))
             for sub_zs_meta in zs_meta.sub_zs_lst:

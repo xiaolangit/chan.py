@@ -6,12 +6,12 @@ from Plot.PlotDriver import CPlotDriver
 import matplotlib.pyplot as plt
 
 if __name__ == "__main__":
-    code = "sz.000002"
+    code = "000002.SZ"
     begin_time = "2018-01-01"
     end_time = None
     data_src = DATA_SRC.BAO_STOCK
-    # 多级别K线：日线、周线、月线、年线
-    lv_list = [KL_TYPE.K_DAY, KL_TYPE.K_WEEK, KL_TYPE.K_MON, KL_TYPE.K_YEAR]
+    # 多级别K线：月线、周线、日线（从大级别到小级别）
+    lv_list = [KL_TYPE.K_MON, KL_TYPE.K_WEEK, KL_TYPE.K_DAY]
 
     config = CChanConfig({
         "bi_strict": True,
@@ -30,14 +30,14 @@ if __name__ == "__main__":
 
     # 为每个时间级别配置不同的绘图参数
     plot_config = {
-        KL_TYPE.K_DAY: {
+        KL_TYPE.K_MON: {
             "plot_kline": True,
             "plot_kline_combine": True,
             "plot_bi": True,
             "plot_seg": True,
             "plot_eigen": False,
             "plot_zs": True,
-            "plot_macd": True,
+            "plot_macd": False,
             "plot_mean": False,
             "plot_channel": False,
             "plot_bsp": True,
@@ -64,31 +64,14 @@ if __name__ == "__main__":
             "plot_rsi": False,
             "plot_kdj": False,
         },
-        KL_TYPE.K_MON: {
+        KL_TYPE.K_DAY: {
             "plot_kline": True,
             "plot_kline_combine": True,
             "plot_bi": True,
             "plot_seg": True,
             "plot_eigen": False,
             "plot_zs": True,
-            "plot_macd": False,
-            "plot_mean": False,
-            "plot_channel": False,
-            "plot_bsp": True,
-            "plot_extrainfo": False,
-            "plot_demark": False,
-            "plot_marker": False,
-            "plot_rsi": False,
-            "plot_kdj": False,
-        },
-        KL_TYPE.K_YEAR: {
-            "plot_kline": True,
-            "plot_kline_combine": True,
-            "plot_bi": True,
-            "plot_seg": True,
-            "plot_eigen": False,
-            "plot_zs": True,
-            "plot_macd": False,
+            "plot_macd": True,
             "plot_mean": False,
             "plot_channel": False,
             "plot_bsp": True,
