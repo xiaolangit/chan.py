@@ -28,37 +28,38 @@ class CustomPlotDriver(CPlotDriver):
         num_fontsize=25,
         num_color="blue",
     ):
-        """重写段绘制方法，只绘制确定的段"""
+        """重写段绘制方法，只绘制确定的段，保持原有的完整功能"""
         x_begin = ax.get_xlim()[0]
-        
+
         for seg_idx, seg_meta in enumerate(meta.seg_list):
             if seg_meta.end_x < x_begin:
                 continue
             # 只绘制确定的段
             if seg_meta.is_sure:
                 ax.plot([seg_meta.begin_x, seg_meta.end_x], [seg_meta.begin_y, seg_meta.end_y], color=color, linewidth=width)
-                if disp_end:
-                    # 简化的文本显示逻辑
-                    ax.text(seg_meta.end_x, seg_meta.end_y, f'{seg_meta.end_y:.2f}', 
-                           fontsize=end_fontsize, color=end_color, 
-                           verticalalignment='bottom', horizontalalignment='center')
-                if plot_trendline:
-                    if seg_meta.tl.get('support'):
-                        tl_meta = seg_meta.format_tl(seg_meta.tl['support'])
-                        ax.plot([tl_meta[0], tl_meta[2]], [tl_meta[1], tl_meta[3]], color=trendline_color, linewidth=trendline_width)
-                    if seg_meta.tl.get('resistance'):
-                        tl_meta = seg_meta.format_tl(seg_meta.tl['resistance'])
-                        ax.plot([tl_meta[0], tl_meta[2]], [tl_meta[1], tl_meta[3]], color=trendline_color, linewidth=trendline_width)
-                if show_num and seg_meta.begin_x >= x_begin:
-                    ax.text((seg_meta.begin_x+seg_meta.end_x)/2, (seg_meta.begin_y+seg_meta.end_y)/2, f'{seg_meta.idx}', fontsize=num_fontsize, color=num_color)
+            if disp_end and seg_meta.is_sure:
+                # 简化的端点文本显示
+                ax.text(seg_meta.end_x, seg_meta.end_y, f'{seg_meta.end_y:.2f}', 
+                       fontsize=end_fontsize, color=end_color, 
+                       verticalalignment='bottom', horizontalalignment='center')
+            if plot_trendline:
+                if seg_meta.tl.get('support'):
+                    tl_meta = seg_meta.format_tl(seg_meta.tl['support'])
+                    ax.plot([tl_meta[0], tl_meta[2]], [tl_meta[1], tl_meta[3]], color=trendline_color, linewidth=trendline_width)
+                if seg_meta.tl.get('resistance'):
+                    tl_meta = seg_meta.format_tl(seg_meta.tl['resistance'])
+                    ax.plot([tl_meta[0], tl_meta[2]], [tl_meta[1], tl_meta[3]], color=trendline_color, linewidth=trendline_width)
+            if show_num and seg_meta.begin_x >= x_begin:
+                ax.text((seg_meta.begin_x+seg_meta.end_x)/2, (seg_meta.begin_y+seg_meta.end_y)/2, f'{seg_meta.idx}', fontsize=num_fontsize, color=num_color)
         
-        if sub_lv_cnt is not None and len(self.lv_lst) > 1 and self.lv_lst[-1] not in [meta.lv]:
-            sure_segs = [seg for seg in meta.seg_list if seg.is_sure]
-            if sub_lv_cnt >= len(sure_segs) and sure_segs:
-                begin_idx = sure_segs[-sub_lv_cnt].begin_x
-                y_begin, y_end = ax.get_ylim()
-                x_end = int(ax.get_xlim()[1])
-                ax.fill_between(range(begin_idx, x_end+1), y_begin, y_end, facecolor=facecolor, alpha=alpha)
+        if sub_lv_cnt is not None and len(self.lv_lst) > 1 and lv != self.lv_lst[-1]:
+            if sub_lv_cnt >= len(meta.seg_list):
+                return
+            else:
+                begin_idx = meta.seg_list[-sub_lv_cnt].begin_x
+            y_begin, y_end = ax.get_ylim()
+            x_end = int(ax.get_xlim()[1])
+            ax.fill_between(range(begin_idx, x_end+1), y_begin, y_end, facecolor=facecolor, alpha=alpha)
 
     def draw_segseg(
         self,
@@ -74,6 +75,8 @@ class CustomPlotDriver(CPlotDriver):
         num_color="blue",
     ):
         """重写段段绘制方法，只绘制确定的段段"""
+        from Common.CEnum import BI_DIR
+        
         x_begin = ax.get_xlim()[0]
 
         for seg_idx, seg_meta in enumerate(meta.segseg_list):
@@ -82,26 +85,26 @@ class CustomPlotDriver(CPlotDriver):
             # 只绘制确定的段段
             if seg_meta.is_sure:
                 ax.plot([seg_meta.begin_x, seg_meta.end_x], [seg_meta.begin_y, seg_meta.end_y], color=color, linewidth=width)
-                if disp_end:
-                    if seg_idx == 0:
-                        ax.text(
-                            seg_meta.begin_x,
-                            seg_meta.begin_y,
-                            f'{seg_meta.begin_y:.2f}',
-                            fontsize=end_fontsize,
-                            color=end_color,
-                            verticalalignment="top" if hasattr(seg_meta, 'dir') and str(seg_meta.dir) == "UP" else "bottom",
-                            horizontalalignment='center')
+            if disp_end and seg_meta.is_sure:
+                if seg_idx == 0:
                     ax.text(
-                        seg_meta.end_x,
-                        seg_meta.end_y,
-                        f'{seg_meta.end_y:.2f}',
+                        seg_meta.begin_x,
+                        seg_meta.begin_y,
+                        f'{seg_meta.begin_y:.2f}',
                         fontsize=end_fontsize,
                         color=end_color,
-                        verticalalignment="top" if hasattr(seg_meta, 'dir') and str(seg_meta.dir) == "UP" else "bottom",
+                        verticalalignment="top" if seg_meta.dir == BI_DIR.UP else "bottom",
                         horizontalalignment='center')
-                if show_num and seg_meta.begin_x >= x_begin:
-                    ax.text((seg_meta.begin_x+seg_meta.end_x)/2, (seg_meta.begin_y+seg_meta.end_y)/2, f'{seg_meta.idx}', fontsize=num_fontsize, color=num_color)
+                ax.text(
+                    seg_meta.end_x,
+                    seg_meta.end_y,
+                    f'{seg_meta.end_y:.2f}',
+                    fontsize=end_fontsize,
+                    color=end_color,
+                    verticalalignment="top" if seg_meta.dir == BI_DIR.UP else "bottom",
+                    horizontalalignment='center')
+            if show_num and seg_meta.begin_x >= x_begin:
+                ax.text((seg_meta.begin_x+seg_meta.end_x)/2, (seg_meta.begin_y+seg_meta.end_y)/2, f'{seg_meta.idx}', fontsize=num_fontsize, color=num_color)
 
     def draw_zs(
         self,
