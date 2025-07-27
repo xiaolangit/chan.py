@@ -13,8 +13,8 @@ class CustomPlotDriver(CPlotDriver):
         meta,
         ax,
         lv,
-        width=5,
-        color="g",
+        width=8,  # 更粗的线宽
+        color="red",  # 默认红色
         sub_lv_cnt=None,
         facecolor='green',
         alpha=0.1,
@@ -65,7 +65,7 @@ class CustomPlotDriver(CPlotDriver):
         self,
         meta,
         ax,
-        width=7,
+        width=10,  # 更粗的段段线宽
         color="brown",
         disp_end=False,
         end_color='brown',
@@ -245,13 +245,25 @@ if __name__ == "__main__":
         },
         "seg": {
             # "plot_trendline": True,
-            "width": 3,  # 段的线宽
+            "width": 8,  # 更粗的段线宽
             "color": "red",  # 段的颜色
+        },
+        "segseg": {
+            "width": 10,  # 更粗的段段线宽
+            "color": "brown",  # 段段的颜色
         },
         "bi": {
             # "show_num": True,
             # "disp_end": True,
-            "color": "black",  # 笔的颜色
+            "color": "blue",  # 笔的颜色改为蓝色，更明显
+        },
+        "bsp": {
+            "buy_color": "red",  # 买入点颜色
+            "sell_color": "green",  # 卖出点颜色
+            "fontsize": 24,  # 更大的买卖点字体
+            "arrow_l": 0.4,  # 更大的箭头长度
+            "arrow_h": 0.5,  # 更大的箭头高度
+            "arrow_w": 2.5,  # 更大的箭头宽度
         },
         "zs": {
             "linewidth": 2,  # 中枢边框宽度
