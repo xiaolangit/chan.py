@@ -3,13 +3,15 @@ from ChanConfig import CChanConfig
 from Common.CEnum import AUTYPE, DATA_SRC, KL_TYPE
 from Plot.AnimatePlotDriver import CAnimateDriver
 from Plot.PlotDriver import CPlotDriver
+import matplotlib.pyplot as plt
 
 if __name__ == "__main__":
-    code = "sz.000001"
+    code = "sz.000002"
     begin_time = "2018-01-01"
     end_time = None
     data_src = DATA_SRC.BAO_STOCK
-    lv_list = [KL_TYPE.K_DAY]
+    # 多级别K线：日线、周线、月线、年线
+    lv_list = [KL_TYPE.K_DAY, KL_TYPE.K_WEEK, KL_TYPE.K_MON, KL_TYPE.K_YEAR]
 
     config = CChanConfig({
         "bi_strict": True,
@@ -26,22 +28,76 @@ if __name__ == "__main__":
         "zs_algo": "normal",
     })
 
+    # 为每个时间级别配置不同的绘图参数
     plot_config = {
-        "plot_kline": True,
-        "plot_kline_combine": True,
-        "plot_bi": True,
-        "plot_seg": True,
-        "plot_eigen": False,
-        "plot_zs": True,
-        "plot_macd": False,
-        "plot_mean": False,
-        "plot_channel": False,
-        "plot_bsp": True,
-        "plot_extrainfo": False,
-        "plot_demark": False,
-        "plot_marker": False,
-        "plot_rsi": False,
-        "plot_kdj": False,
+        KL_TYPE.K_DAY: {
+            "plot_kline": True,
+            "plot_kline_combine": True,
+            "plot_bi": True,
+            "plot_seg": True,
+            "plot_eigen": False,
+            "plot_zs": True,
+            "plot_macd": True,
+            "plot_mean": False,
+            "plot_channel": False,
+            "plot_bsp": True,
+            "plot_extrainfo": False,
+            "plot_demark": False,
+            "plot_marker": False,
+            "plot_rsi": False,
+            "plot_kdj": False,
+        },
+        KL_TYPE.K_WEEK: {
+            "plot_kline": True,
+            "plot_kline_combine": True,
+            "plot_bi": True,
+            "plot_seg": True,
+            "plot_eigen": False,
+            "plot_zs": True,
+            "plot_macd": True,
+            "plot_mean": False,
+            "plot_channel": False,
+            "plot_bsp": True,
+            "plot_extrainfo": False,
+            "plot_demark": False,
+            "plot_marker": False,
+            "plot_rsi": False,
+            "plot_kdj": False,
+        },
+        KL_TYPE.K_MON: {
+            "plot_kline": True,
+            "plot_kline_combine": True,
+            "plot_bi": True,
+            "plot_seg": True,
+            "plot_eigen": False,
+            "plot_zs": True,
+            "plot_macd": False,
+            "plot_mean": False,
+            "plot_channel": False,
+            "plot_bsp": True,
+            "plot_extrainfo": False,
+            "plot_demark": False,
+            "plot_marker": False,
+            "plot_rsi": False,
+            "plot_kdj": False,
+        },
+        KL_TYPE.K_YEAR: {
+            "plot_kline": True,
+            "plot_kline_combine": True,
+            "plot_bi": True,
+            "plot_seg": True,
+            "plot_eigen": False,
+            "plot_zs": True,
+            "plot_macd": False,
+            "plot_mean": False,
+            "plot_channel": False,
+            "plot_bsp": True,
+            "plot_extrainfo": False,
+            "plot_demark": False,
+            "plot_marker": False,
+            "plot_rsi": False,
+            "plot_kdj": False,
+        }
     }
 
     plot_para = {
@@ -54,6 +110,8 @@ if __name__ == "__main__":
         },
         "figure": {
             "x_range": 200,
+            "w": 24,
+            "h": 20,  # 增加高度以适应四个子图
         },
         "marker": {
             # "markers": {  # text, position, color
@@ -62,6 +120,7 @@ if __name__ == "__main__":
             # },
         }
     }
+    
     chan = CChan(
         code=code,
         begin_time=begin_time,
@@ -79,7 +138,7 @@ if __name__ == "__main__":
             plot_para=plot_para,
         )
         plot_driver.figure.show()
-        plot_driver.save2img("./test.png")
+        plot_driver.save2img("./multi_timeframe_chart.png")
     else:
         CAnimateDriver(
             chan,
