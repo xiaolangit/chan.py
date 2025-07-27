@@ -236,17 +236,32 @@ if __name__ == "__main__":
     }
 
     plot_para = {
+        "kl": {
+            "width": 0.8,  # 进一步增加K线宽度，让K线更清晰
+            "rugd": True,  # 红涨绿跌
+        },
+        "klc": {
+            "width": 1.0,  # 增加合并K线的宽度
+        },
         "seg": {
             # "plot_trendline": True,
+            "width": 3,  # 段的线宽
+            "color": "red",  # 段的颜色
         },
         "bi": {
             # "show_num": True,
             # "disp_end": True,
+            "color": "black",  # 笔的颜色
+        },
+        "zs": {
+            "linewidth": 2,  # 中枢边框宽度
+            "color": "yellow",  # 中枢颜色
         },
         "figure": {
             "x_range": 200,
-            "w": 24,
-            "h": 20,  # 增加高度以适应三个子图
+            "w": 28,  # 增加宽度
+            "h": 24,  # 增加高度以适应三个子图
+            "dpi": 120,  # 提高DPI增强清晰度
         },
         "marker": {
             # "markers": {  # text, position, color
