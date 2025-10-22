@@ -1,0 +1,408 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+股票买卖信号提取API
+提供RESTful接口返回股票的缠论买卖信号
+"""
+
+from flask import Flask, jsonify, request
+from datetime import datetime, timedelta
+import json
+import traceback
+from typing import List, Dict, Any
+import warnings
+
+# 导入缠论分析相关模块
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from Chan import CChan
+from ChanConfig import CChanConfig
+from Common.CEnum import AUTYPE, KL_TYPE
+from Plot.PlotMeta import CChanPlotMeta
+from DataAPI.QmtStockAPI import CQMTData
+
+# 过滤警告
+warnings.filterwarnings('ignore', category=UserWarning, module='matplotlib')
+
+app = Flask(__name__)
+
+class StockSignalExtractor:
+    """股票信号提取器"""
+    
+    def __init__(self):
+        # 默认缠论配置
+        self.default_config = CChanConfig({
+            "bi_strict": True,
+            "trigger_step": False,
+            "skip_step": 0,
+            "divergence_rate": float("inf"),
+            "bsp2_follow_1": False,
+            "bsp3_follow_1": False,
+            "min_zs_cnt": 0,
+            "bs1_peak": False,
+            "macd_algo": "peak",
+            "bs_type": '1,2,3a,1p,2s,3b',
+            "print_warning": False,
+            "zs_algo": "normal",
+        })
+        
+        # 支持的时间框架
+        self.timeframes = {
+            "1m": KL_TYPE.K_1M,
+            "5m": KL_TYPE.K_5M,
+            "15m": KL_TYPE.K_15M,
+            "30m": KL_TYPE.K_30M,
+            "60m": KL_TYPE.K_60M,
+            "1d": KL_TYPE.K_DAY,
+            "1w": KL_TYPE.K_WEEK,
+            "1M": KL_TYPE.K_MON
+        }
+    
+    def extract_signals(self, code: str, timeframe: str = "1d", 
+                       begin_time: str = None, end_time: str = None) -> Dict[str, Any]:
+        """
+        提取单个股票的买卖信号
+        
+        Args:
+            code: 股票代码，如 "159647.SZ"
+            timeframe: 时间框架，如 "1d", "5m", "15m"
+            begin_time: 开始时间，格式 "20240101"
+            end_time: 结束时间，格式 "20241231"
+            
+        Returns:
+            包含买卖信号的字典
+        """
+        try:
+            # 设置默认时间范围
+            if begin_time is None:
+                begin_time = (datetime.now() - timedelta(days=365)).strftime("%Y%m%d")
+            if end_time is None:
+                end_time = datetime.now().strftime("%Y%m%d")
+            
+            # 验证时间框架
+            if timeframe not in self.timeframes:
+                raise ValueError(f"不支持的时间框架: {timeframe}")
+            
+            kl_type = self.timeframes[timeframe]
+            
+            # 使用动态导入的方式，避免修改原始Chan.py文件
+            # 将类添加到当前模块的全局命名空间
+            import DataAPI.QmtStockAPI
+            globals()['CQMTData'] = DataAPI.QmtStockAPI.CQMTData
+            
+            # 创建缠论分析 - 直接使用QMT数据源
+            chan = CChan(
+                code=code,
+                begin_time=begin_time,
+                end_time=end_time,
+                data_src="custom:QmtStockAPI.CQMTData",
+                lv_list=[kl_type],
+                config=self.default_config,
+                autype=AUTYPE.QFQ,
+            )
+            
+            # 获取绘图元数据
+            meta = CChanPlotMeta(chan[kl_type])
+            
+            # 提取买卖点信息
+            buy_signals = []
+            sell_signals = []
+            
+            # 处理普通买卖点（只包含is_sure=True的）
+            if hasattr(meta, 'bs_point_lst') and meta.bs_point_lst:
+                for bsp in meta.bs_point_lst:
+                    # 检查关联的笔是否is_sure=True
+                    if hasattr(bsp, 'x') and bsp.x < len(meta.data.bi_list):
+                        # 通过x坐标找到对应的笔
+                        corresponding_bi = None
+                        for bi in meta.data.bi_list:
+                            if bi.get_end_klu().idx == bsp.x:
+                                corresponding_bi = bi
+                                break
+                        
+                        # 只有当对应的笔is_sure=True时才包含此买卖点
+                        if corresponding_bi is None or not corresponding_bi.is_sure:
+                            continue
+                    
+                    signal_info = {
+                        "type": bsp.desc(),
+                        "time": meta.datetick[bsp.x] if bsp.x < len(meta.datetick) else "Unknown",
+                        "price": float(bsp.y),
+                        "x_index": int(bsp.x),
+                        "signal_category": "normal",
+                        "is_buy": bool(bsp.is_buy),
+                        "is_sure": True  # 明确标记这是确认的信号
+                    }
+                    
+                    if bsp.is_buy:
+                        buy_signals.append(signal_info)
+                    else:
+                        sell_signals.append(signal_info)
+            
+            # 处理段买卖点（只包含is_sure=True的）
+            if hasattr(meta, 'seg_bsp_lst') and meta.seg_bsp_lst:
+                for seg_bsp in meta.seg_bsp_lst:
+                    # 检查关联的段是否is_sure=True
+                    if hasattr(seg_bsp, 'x') and seg_bsp.x < len(meta.data.seg_list):
+                        # 通过x坐标找到对应的段
+                        corresponding_seg = None
+                        for seg in meta.data.seg_list:
+                            if seg.get_end_klu().idx == seg_bsp.x:
+                                corresponding_seg = seg
+                                break
+                        
+                        # 只有当对应的段is_sure=True时才包含此买卖点
+                        if corresponding_seg is None or not corresponding_seg.is_sure:
+                            continue
+                    
+                    signal_info = {
+                        "type": seg_bsp.desc(),
+                        "time": meta.datetick[seg_bsp.x] if seg_bsp.x < len(meta.datetick) else "Unknown",
+                        "price": float(seg_bsp.y),
+                        "x_index": int(seg_bsp.x),
+                        "signal_category": "segment",
+                        "is_buy": bool(seg_bsp.is_buy),
+                        "is_sure": True  # 明确标记这是确认的信号
+                    }
+                    
+                    if seg_bsp.is_buy:
+                        buy_signals.append(signal_info)
+                    else:
+                        sell_signals.append(signal_info)
+            
+            # 获取最新价格信息
+            klu_list = list(meta.klu_iter())
+            latest_price = float(klu_list[-1].close) if klu_list else 0.0
+            latest_time = meta.datetick[-1] if meta.datetick else "Unknown"
+            
+            # 获取最新买卖信号
+            latest_buy_signal = buy_signals[-1] if buy_signals else None
+            latest_sell_signal = sell_signals[-1] if sell_signals else None
+            
+            return {
+                "code": code,
+                "timeframe": timeframe,
+                "status": "success",
+                "data_source": "real",
+                "data_range": {
+                    "begin_time": begin_time,
+                    "end_time": end_time
+                },
+                "latest_info": {
+                    "price": latest_price,
+                    "time": latest_time
+                },
+                "signals": {
+                    "buy_signals": buy_signals,
+                    "sell_signals": sell_signals,
+                    "total_buy_count": len(buy_signals),
+                    "total_sell_count": len(sell_signals)
+                },
+                "latest_signals": {
+                    "latest_buy": latest_buy_signal,
+                    "latest_sell": latest_sell_signal
+                },
+                "summary": {
+                    "has_recent_buy": latest_buy_signal is not None,
+                    "has_recent_sell": latest_sell_signal is not None,
+                    "signal_type": self._calculate_signal_strength(buy_signals, sell_signals)
+                }
+            }
+            
+        except Exception as e:
+            return {
+                "code": code,
+                "timeframe": timeframe,
+                "status": "error",
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+    
+    def _calculate_signal_strength(self, buy_signals: List[Dict], sell_signals: List[Dict]) -> str:
+        """检查是否有买卖点信号"""
+        # 获取最新的买卖信号
+        latest_buy = buy_signals[-1] if buy_signals else None
+        latest_sell = sell_signals[-1] if sell_signals else None
+        
+        # 检查是否有最新买入信号
+        if latest_buy:
+            return "target_buy"
+        
+        # 检查是否有最新卖出信号  
+        if latest_sell:
+            return "target_sell"
+            
+        return "no_signal"
+    
+    def extract_multiple_signals(self, codes: List[str], timeframe: str = "1d", 
+                                begin_time: str = None, end_time: str = None) -> Dict[str, Any]:
+        """
+        批量提取多个股票的买卖信号
+        
+        Args:
+            codes: 股票代码列表
+            timeframe: 时间框架
+            begin_time: 开始时间
+            end_time: 结束时间
+            
+        Returns:
+            包含所有股票信号的字典
+        """
+        results = {}
+        summary = {
+            "total_stocks": len(codes),
+            "successful": 0,
+            "failed": 0,
+            "buy_signal_stocks": [],  # 出现买入信号的股票
+            "sell_signal_stocks": [], # 出现卖出信号的股票
+            "no_signal_stocks": []    # 没有任何信号的股票
+        }
+        
+        for code in codes:
+            print(f"正在处理股票: {code}")
+            result = self.extract_signals(code, timeframe, begin_time, end_time)
+            results[code] = result
+            
+            if result["status"] == "success":
+                summary["successful"] += 1
+                signal_strength = result["summary"]["signal_type"]
+                
+                if signal_strength == "target_buy":
+                    summary["buy_signal_stocks"].append(code)
+                elif signal_strength == "target_sell":
+                    summary["sell_signal_stocks"].append(code)
+                else:
+                    summary["no_signal_stocks"].append(code)
+            else:
+                summary["failed"] += 1
+        
+        return {
+            "batch_analysis": True,
+            "timeframe": timeframe,
+            "timestamp": datetime.now().isoformat(),
+            "summary": summary,
+            "results": results
+        }
+
+# 创建全局信号提取器实例
+signal_extractor = StockSignalExtractor()
+
+@app.route('/api/signals/single', methods=['GET', 'POST'])
+def get_single_stock_signals():
+    """获取单个股票的买卖信号"""
+    try:
+        if request.method == 'POST':
+            data = request.get_json()
+            code = data.get('code')
+            timeframe = data.get('timeframe', '1d')
+            begin_time = data.get('begin_time')
+            end_time = data.get('end_time')
+        else:
+            code = request.args.get('code')
+            timeframe = request.args.get('timeframe', '1d')
+            begin_time = request.args.get('begin_time')
+            end_time = request.args.get('end_time')
+        
+        if not code:
+            return jsonify({"error": "股票代码不能为空"}), 400
+        
+        result = signal_extractor.extract_signals(code, timeframe, begin_time, end_time)
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({"error": str(e), "traceback": traceback.format_exc()}), 500
+
+@app.route('/api/signals/batch', methods=['POST'])
+def get_batch_stock_signals():
+    """批量获取多个股票的买卖信号"""
+    try:
+        data = request.get_json()
+        codes = data.get('codes', [])
+        timeframe = data.get('timeframe', '1d')
+        begin_time = data.get('begin_time')
+        end_time = data.get('end_time')
+        
+        if not codes:
+            return jsonify({"error": "股票代码列表不能为空"}), 400
+        
+        result = signal_extractor.extract_multiple_signals(codes, timeframe, begin_time, end_time)
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({"error": str(e), "traceback": traceback.format_exc()}), 500
+
+@app.route('/api/signals/demo', methods=['GET'])
+def demo_signals():
+    """演示接口 - 使用您的股票列表"""
+    try:
+        demo_codes = ["159647.SZ", "600585.SH"]
+        result = signal_extractor.extract_multiple_signals(demo_codes, timeframe="1d")
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({"error": str(e), "traceback": traceback.format_exc()}), 500
+
+@app.route('/api/health', methods=['GET'])
+def health_check():
+    """健康检查接口"""
+    return jsonify({
+        "status": "healthy",
+        "timestamp": datetime.now().isoformat(),
+        "service": "股票买卖信号API",
+        "supported_timeframes": list(signal_extractor.timeframes.keys())
+    })
+
+@app.route('/', methods=['GET'])
+def api_documentation():
+    """API文档"""
+    docs = {
+        "title": "股票买卖信号API",
+        "version": "1.0.0",
+        "description": "基于缠论分析的股票买卖信号提取服务",
+        "endpoints": {
+            "GET /": "API文档",
+            "GET /api/health": "健康检查",
+            "GET /api/signals/demo": "演示接口（您的股票列表）",
+            "GET/POST /api/signals/single": "单个股票信号",
+            "POST /api/signals/batch": "批量股票信号"
+        },
+        "parameters": {
+            "code": "股票代码，如 159647.SZ",
+            "codes": "股票代码列表",
+            "timeframe": "时间框架: 1m,5m,15m,30m,60m,1d,1w,1M",
+            "begin_time": "开始时间: 20240101",
+            "end_time": "结束时间: 20241231"
+        },
+        "examples": {
+            "single_stock": {
+                "url": "/api/signals/single?code=159647.SZ&timeframe=1d",
+                "post_body": {
+                    "code": "159647.SZ",
+                    "timeframe": "1d",
+                    "begin_time": "20240101"
+                }
+            },
+            "batch_stocks": {
+                "url": "/api/signals/batch",
+                "post_body": {
+                    "codes": ["159647.SZ", "600585.SH"],
+                    "timeframe": "1d"
+                }
+            }
+        }
+    }
+    return jsonify(docs)
+
+if __name__ == '__main__':
+    print("=" * 60)
+    print("🚀 股票买卖信号API服务启动")
+    print("=" * 60)
+    print("📍 服务地址: http://localhost:5000")
+    print("📖 API文档: http://localhost:5000")
+    print("🔍 演示接口: http://localhost:5000/api/signals/demo")
+    print("💚 健康检查: http://localhost:5000/api/health")
+    print("=" * 60)
+    
+    app.run(debug=True, host='0.0.0.0', port=5000)
